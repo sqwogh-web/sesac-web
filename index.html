@@ -2,69 +2,221 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>심재호</title>
 <style>
+  /* Design tokens adapted from Wanted's Montage design system
+     https://github.com/wanteddev/montage-web */
+  :root {
+    --color-primary-normal: #0066FF;
+    --color-primary-strong: #005EEB;
+    --color-primary-bg: #EAF2FE;
+
+    --color-label-normal: #171717;
+    --color-label-neutral: #474747;
+    --color-label-alternative: #737373;
+    --color-label-assistive: #9B9B9B;
+
+    --color-bg-normal: #FFFFFF;
+    --color-bg-alternative: #F7F7F7;
+
+    --color-line-normal: rgba(115, 115, 115, 0.16);
+    --color-line-solid: #DCDCDC;
+
+    --color-status-positive: #12B564;
+    --color-status-cautionary: #FF8A00;
+    --color-status-negative: #F04452;
+
+    --radius-small: 8px;
+    --radius-medium: 12px;
+    --radius-large: 16px;
+
+    --spacing-4: 4px;
+    --spacing-8: 8px;
+    --spacing-12: 12px;
+    --spacing-16: 16px;
+    --spacing-24: 24px;
+    --spacing-32: 32px;
+    --spacing-48: 48px;
+
+    --shadow-small: 0px 2px 4px -2px rgba(23,23,23,0.06), 0px 4px 6px -1px rgba(23,23,23,0.06);
+    --shadow-medium: 0px 4px 6px -2px rgba(23,23,23,0.07), 0px 10px 15px -3px rgba(23,23,23,0.07);
+  }
+
+  * { box-sizing: border-box; }
+
   body {
-    font-family: sans-serif;
-    font-size: 18px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color: var(--color-label-normal);
+    background: var(--color-bg-alternative);
     line-height: 1.6;
-    padding: 20px;
-    max-width: 700px;
+    margin: 0;
+    padding: var(--spacing-48) var(--spacing-16);
   }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  section {
+    background: var(--color-bg-normal);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-small);
+    padding: var(--spacing-32);
+    margin-bottom: var(--spacing-24);
+  }
+
   h1 {
-    font-size: 36px;
+    font-size: 2rem;
+    line-height: 2.75rem;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-16);
+    color: var(--color-label-normal);
   }
+
+  h2 {
+    font-size: 1.375rem;
+    line-height: 1.875rem;
+    letter-spacing: -0.019em;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-12);
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.625rem;
+    letter-spacing: 0.006em;
+    color: var(--color-label-neutral);
+    margin: 0 0 var(--spacing-12);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.019em;
+    color: var(--color-primary-strong);
+    background: var(--color-primary-bg);
+    border-radius: 999px;
+    padding: 4px 12px;
+    margin-bottom: var(--spacing-16);
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    margin-top: var(--spacing-16);
+  }
+
   table {
+    width: 100%;
+    min-width: 480px;
     border-collapse: collapse;
-    margin-top: 20px;
+    font-size: 0.9375rem;
+    letter-spacing: 0.0096em;
   }
-  th, td {
-    border: 1px solid #333;
-    padding: 8px 16px;
+
+  caption {
     text-align: left;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-label-alternative);
+    margin-bottom: var(--spacing-8);
+    caption-side: top;
   }
+
+  th, td {
+    border-bottom: 1px solid var(--color-line-solid);
+    padding: 12px 14px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
   th {
-    background: #eee;
+    color: var(--color-label-alternative);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    letter-spacing: 0.019em;
+    background: var(--color-bg-alternative);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  td.highlight {
+    color: var(--color-primary-strong);
+    font-weight: 700;
+  }
+
+  .table-gap {
+    height: var(--spacing-24);
+  }
+
+  footer p {
+    font-size: 0.8125rem;
+    color: var(--color-label-assistive);
+    text-align: right;
+    margin: 0;
   }
 </style>
 </head>
 <body>
-  <h1>심재호</h1>
+<main>
 
-  <p>안녕하세요, 심재호입니다. 철학을 공부하다가 요즘은 데이터 분석에 관심이 생겨서 파이썬을 처음부터 배우고 있습니다.</p>
-  <p>구별 부동산 통계나 간단한 계산기 같은 것들을 직접 만들어보면서 하나씩 익혀가는 중입니다.</p>
-  <p>서울 청년취업사관학교 새싹(sesac)에서 실습하며 배운 것과 앞으로 배울 것들을 정리해보려고 합니다.</p>
+  <section>
+    <h1>심재호</h1>
+    <p>안녕하세요, 심재호입니다. 철학을 공부하다가 요즘은 데이터 분석에 관심이 생겨서 파이썬을 처음부터 배우고 있습니다.</p>
+    <p>구별 부동산 통계나 간단한 계산기 같은 것들을 직접 만들어보면서 하나씩 익혀가는 중입니다.</p>
+    <p>서울 청년취업사관학교 새싹(sesac)에서 실습하며 배운 것과 앞으로 배울 것들을 정리해보려고 합니다.</p>
 
-  <table>
-    <tr><th>항목</th><th>설명</th></tr>
-    <tr><td>데이터 분석</td><td>배우고 있는 것</td></tr>
-    <tr><td>철학</td><td>배웠던 것</td></tr>
-    <tr><td>사회의 쓴 맛</td><td>앞으로 배울 것</td></tr>
-  </table>
+    <div class="table-scroll">
+      <table>
+        <tr><th>항목</th><th>설명</th></tr>
+        <tr><td>데이터 분석</td><td>배우고 있는 것</td></tr>
+        <tr><td>철학</td><td>배웠던 것</td></tr>
+        <tr><td>사회의 쓴 맛</td><td>앞으로 배울 것</td></tr>
+      </table>
+    </div>
+  </section>
 
-  <h1>중랑구 전세 주거비 현황</h1>
+  <section>
+    <span class="badge">부동산 데이터 분석</span>
+    <h2>중랑구 전세 주거비 현황</h2>
+    <p>중랑구는 매매 - 전세 갭이 작은 편이다. bottom 5 안에 든다.</p>
 
-  <p>중랑구는 매매 - 전세 갭이 작은 편이다. bottom 5 안에 든다.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>표 1) 매매-전세 갭 top 5</caption>
+        <tr><th>순위</th><th>자치구</th><th>평균 매매가(억)</th><th>평균 전세보증금(억)</th><th>매매-전세(억)</th></tr>
+        <tr><td>1</td><td>강남구</td><td>27.54</td><td>9.48</td><td>18.07</td></tr>
+        <tr><td>2</td><td>서초구</td><td>26.03</td><td>10.45</td><td>15.58</td></tr>
+        <tr><td>3</td><td>용산구</td><td>21.04</td><td>8.74</td><td>12.30</td></tr>
+        <tr><td>4</td><td>송파구</td><td>19.37</td><td>7.67</td><td>11.70</td></tr>
+        <tr><td>5</td><td>성동구</td><td>16.59</td><td>7.39</td><td>9.21</td></tr>
+      </table>
+    </div>
 
-  <table>
-    표 1) 매매-전세 갭 top 5
-    <tr><th>순위</th><th>자치구</th><th>평균 매매가(억)</th><th>평균 전세보증금(억)</th><th>매매-전세(억)</th></tr>
-    <tr><td>1</td><td>강남구</td><td>27.54</td><td>9.48</td><td>18.07</td></tr>
-    <tr><td>2</td><td>서초구</td><td>26.03</td><td>10.45</td><td>15.58</td></tr>
-    <tr><td>3</td><td>용산구</td><td>21.04</td><td>8.74</td><td>12.30</td></tr>
-    <tr><td>4</td><td>송파구</td><td>19.37</td><td>7.67</td><td>11.70</td></tr>
-    <tr><td>5</td><td>성동구</td><td>16.59</td><td>7.39</td><td>9.21</td></tr>
-  </table>
-  <p> </p>
-  <table>
-    표2) 매매-전세 갭 bottom 5
-    <tr><th>순위</th><th>자치구</th><th>평균 매매가(억)</th><th>평균 전세보증금(억)</th><th>매매-전세(억)</th></tr>
-    <tr><td>21</td><td>노원구</td><td>6.45</td><td>3.29</td><td>3.17</td></tr>
-    <tr><td>22</td><td>금천구</td><td>6.57</td><td>3.79</td><td>2.78</td></tr>
-    <tr><td>23</td><td>강북구</td><td>6.90</td><td>4.17</td><td>2.73</td></tr>
-    <tr><td>24</td><td>중랑구</td><td>6.67</td><td>4.13</td><td>2.53</td></tr>
-    <tr><td>25</td><td>도봉구</td><td>5.70</td><td>3.65</td><td>2.05</td></tr>
-  </table>
-  <p>데이터 출처 - 서울열린데이터광장</p>
+    <div class="table-gap"></div>
+
+    <div class="table-scroll">
+      <table>
+        <caption>표 2) 매매-전세 갭 bottom 5</caption>
+        <tr><th>순위</th><th>자치구</th><th>평균 매매가(억)</th><th>평균 전세보증금(억)</th><th>매매-전세(억)</th></tr>
+        <tr><td>21</td><td>노원구</td><td>6.45</td><td>3.29</td><td>3.17</td></tr>
+        <tr><td>22</td><td>금천구</td><td>6.57</td><td>3.79</td><td>2.78</td></tr>
+        <tr><td>23</td><td>강북구</td><td>6.90</td><td>4.17</td><td>2.73</td></tr>
+        <tr><td>24</td><td class="highlight">중랑구</td><td>6.67</td><td>4.13</td><td class="highlight">2.53</td></tr>
+        <tr><td>25</td><td>도봉구</td><td>5.70</td><td>3.65</td><td>2.05</td></tr>
+      </table>
+    </div>
+
+    <footer>
+      <p>데이터 출처 - 서울열린데이터광장</p>
+    </footer>
+  </section>
+
+</main>
 </body>
 </html>
