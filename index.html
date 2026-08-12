@@ -109,6 +109,44 @@
     margin-top: var(--spacing-16);
   }
 
+  .link-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-small);
+    background: linear-gradient(135deg, var(--color-primary-normal), #3385FF);
+    padding: var(--spacing-32);
+    margin-bottom: var(--spacing-24);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 10px 20px -6px rgba(0,102,255,0.35);
+  }
+  .link-card .badge {
+    background: rgba(255,255,255,0.2);
+    color: #FFFFFF;
+  }
+  .link-card h2 {
+    color: #FFFFFF;
+    margin-bottom: var(--spacing-8);
+  }
+  .link-card p {
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 0;
+  }
+  .link-card .cta {
+    display: inline-block;
+    margin-top: var(--spacing-16);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+  .link-card .cta::after {
+    content: ' →';
+  }
+
   table {
     width: 100%;
     min-width: 480px;
@@ -180,6 +218,13 @@
       </table>
     </div>
   </section>
+
+  <a class="link-card" href="dashboard.html">
+    <span class="badge">NEW · 부동산 대시보드</span>
+    <h2>우리 예산으로 어디에 살 수 있을까?</h2>
+    <p>예산과 희망 면적을 입력하면 서울 25개 자치구를 가성비 순으로 비교해주는 대시보드입니다.</p>
+    <span class="cta">대시보드 열기</span>
+  </a>
 
   <section>
     <span class="badge">부동산 데이터 분석</span>

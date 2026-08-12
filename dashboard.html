@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>부동산 대시보드 — 예산으로 지역 찾기</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --color-primary-normal: #0066FF;
+    --color-primary-strong: #005EEB;
+    --color-primary-bg: #EAF2FE;
+
+    --color-label-normal: #171717;
+    --color-label-neutral: #474747;
+    --color-label-alternative: #737373;
+    --color-label-assistive: #9B9B9B;
+
+    --color-bg-normal: #FFFFFF;
+    --color-bg-alternative: #F7F7F7;
+
+    --color-line-normal: rgba(115, 115, 115, 0.16);
+    --color-line-solid: #DCDCDC;
+
+    --color-status-positive: #12B564;
+    --color-status-cautionary: #FF8A00;
+    --color-status-negative: #F04452;
+
+    --radius-small: 8px;
+    --radius-medium: 12px;
+    --radius-large: 16px;
+
+    --spacing-8: 8px;
+    --spacing-12: 12px;
+    --spacing-16: 16px;
+    --spacing-24: 24px;
+    --spacing-32: 32px;
+    --spacing-48: 48px;
+
+    --shadow-small: 0px 2px 4px -2px rgba(23,23,23,0.06), 0px 4px 6px -1px rgba(23,23,23,0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color: var(--color-label-normal);
+    background: var(--color-bg-alternative);
+    line-height: 1.6;
+    margin: 0;
+    padding: var(--spacing-48) var(--spacing-16);
+  }
+
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  a.back-link {
+    display: inline-block;
+    color: var(--color-label-alternative);
+    font-size: 0.875rem;
+    text-decoration: none;
+    margin-bottom: var(--spacing-16);
+  }
+  a.back-link:hover { color: var(--color-primary-strong); }
+
+  section {
+    background: var(--color-bg-normal);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-small);
+    padding: var(--spacing-32);
+    margin-bottom: var(--spacing-24);
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 2.75rem;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-8);
+  }
+
+  h2 {
+    font-size: 1.375rem;
+    line-height: 1.875rem;
+    letter-spacing: -0.019em;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-12);
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.625rem;
+    letter-spacing: 0.006em;
+    color: var(--color-label-neutral);
+    margin: 0 0 var(--spacing-12);
+  }
+
+  .subtitle {
+    color: var(--color-label-alternative);
+    font-size: 0.9375rem;
+    margin-bottom: var(--spacing-24);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.019em;
+    color: var(--color-primary-strong);
+    background: var(--color-primary-bg);
+    border-radius: 999px;
+    padding: 4px 12px;
+    margin-bottom: var(--spacing-16);
+  }
+
+  /* --- controls --- */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-24);
+  }
+  @media (max-width: 560px) {
+    .controls { grid-template-columns: 1fr; }
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-label-alternative);
+    margin-bottom: var(--spacing-8);
+  }
+
+  .field input[type="number"] {
+    width: 100%;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-label-normal);
+    border: 1px solid var(--color-line-solid);
+    border-radius: var(--radius-small);
+    padding: 10px 12px;
+    background: var(--color-bg-alternative);
+  }
+  .field input[type="number"]:focus {
+    outline: none;
+    border-color: var(--color-primary-normal);
+    background: var(--color-bg-normal);
+  }
+
+  .area-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-8);
+  }
+  .area-row span {
+    color: var(--color-label-assistive);
+    font-size: 0.875rem;
+  }
+
+  .area-presets {
+    display: flex;
+    gap: 8px;
+    margin-top: var(--spacing-8);
+    flex-wrap: wrap;
+  }
+  .area-presets button {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-label-neutral);
+    background: var(--color-bg-alternative);
+    border: 1px solid var(--color-line-solid);
+    border-radius: 999px;
+    padding: 4px 12px;
+    cursor: pointer;
+  }
+  .area-presets button:hover {
+    border-color: var(--color-primary-normal);
+    color: var(--color-primary-strong);
+  }
+
+  /* --- table --- */
+  .table-scroll {
+    overflow-x: auto;
+    margin-top: var(--spacing-16);
+  }
+
+  table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  th, td {
+    border-bottom: 1px solid var(--color-line-solid);
+    padding: 12px 14px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--color-label-alternative);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    background: var(--color-bg-alternative);
+  }
+
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--color-primary-bg); }
+  tbody tr.selected { background: var(--color-primary-bg); }
+  tbody tr.no-data { opacity: 0.4; cursor: default; }
+  tbody tr.no-data:hover { background: transparent; }
+
+  td.rank {
+    color: var(--color-label-assistive);
+    font-weight: 600;
+  }
+  td.gu-name {
+    font-weight: 700;
+  }
+  td.highlight {
+    color: var(--color-primary-strong);
+    font-weight: 700;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 340px;
+    margin-top: var(--spacing-24);
+  }
+
+  #trendSection { display: none; }
+  #trendSection.visible { display: block; }
+
+  .empty-state {
+    color: var(--color-label-assistive);
+    font-size: 0.9375rem;
+    padding: var(--spacing-24) 0;
+    text-align: center;
+  }
+
+  footer p {
+    font-size: 0.8125rem;
+    color: var(--color-label-assistive);
+    text-align: right;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <a class="back-link" href="index.html">&larr; 심재호 홈으로</a>
+
+  <section>
+    <span class="badge">부동산 대시보드</span>
+    <h1>우리 예산으로 어디에 살 수 있을까?</h1>
+    <p class="subtitle">서울 아파트 실거래가 320,141건 (2025-07 ~ 2026-06) 기반 · 신혼부부를 위한 자치구 비교 도구</p>
+
+    <div class="controls">
+      <div class="field">
+        <label for="budgetInput">예산 (억원)</label>
+        <input type="number" id="budgetInput" value="7" min="1" max="50" step="0.5">
+      </div>
+      <div class="field">
+        <label>희망 면적 (㎡)</label>
+        <div class="area-row">
+          <input type="number" id="areaMinInput" value="60" min="0" max="300" step="5">
+          <span>~</span>
+          <input type="number" id="areaMaxInput" value="85" min="0" max="300" step="5">
+        </div>
+        <div class="area-presets">
+          <button type="button" data-min="40" data-max="60">소형 (40~60㎡)</button>
+          <button type="button" data-min="60" data-max="85">국민평형 (60~85㎡)</button>
+          <button type="button" data-min="85" data-max="135">중대형 (85~135㎡)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>자치구 랭킹 — 내 예산으로 얻는 면적 순</h2>
+    <p>매매 기준. 표의 행을 클릭하면 그 구의 12개월 가격 추이를 볼 수 있습니다.</p>
+
+    <div class="chart-wrap">
+      <canvas id="rankChart"></canvas>
+    </div>
+
+    <div class="table-scroll">
+      <table id="rankTable">
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th>자치구</th>
+            <th>내 예산으로 얻는 면적</th>
+            <th>거래량(12개월)</th>
+            <th>전세가율</th>
+          </tr>
+        </thead>
+        <tbody id="rankTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="trendSection">
+    <h2 id="trendTitle">추이</h2>
+    <p id="trendSubtitle"></p>
+    <div class="chart-wrap">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </section>
+
+  <footer>
+    <p>데이터 출처 - 서울열린데이터광장</p>
+  </footer>
+
+</main>
+
+<script>
+const PYEONG = 3.305785; // 1평 = 3.305785 m^2
+
+let DATA = null;
+let rankChart = null;
+let trendChart = null;
+let selectedGu = null;
+
+async function loadData() {
+  const res = await fetch('data/dashboard_data.json');
+  DATA = await res.json();
+  render();
+}
+
+function bucketsInRange(min, max) {
+  const size = DATA.meta.bucket_size;
+  const cap = DATA.meta.bucket_cap;
+  const keys = [];
+  for (let b = 0; b <= cap; b += size) {
+    // a bucket [b, b+size) overlaps [min, max) if b < max and b+size > min
+    if (b < max && (b + size) > min) keys.push(String(b));
+  }
+  return keys;
+}
+
+function aggregateGu(gu, dealType, bucketKeys) {
+  const guData = DATA.data[gu];
+  if (!guData) return { count: 0, sumPrice: 0, sumArea: 0 };
+  const byMonth = guData[dealType] || {};
+  let count = 0, sumPrice = 0, sumArea = 0;
+  for (const ym of DATA.meta.months) {
+    const monthData = byMonth[ym];
+    if (!monthData) continue;
+    for (const bk of bucketKeys) {
+      const cell = monthData[bk];
+      if (!cell) continue;
+      count += cell.count;
+      sumPrice += cell.sum_price;
+      sumArea += cell.sum_area;
+    }
+  }
+  return { count, sumPrice, sumArea };
+}
+
+function computeRanking(budgetEok, areaMin, areaMax) {
+  const budgetManwon = budgetEok * 10000;
+  const bucketKeys = bucketsInRange(areaMin, areaMax);
+
+  const rows = DATA.meta.gu_list.map(gu => {
+    const sale = aggregateGu(gu, '매매', bucketKeys);
+    const jeonse = aggregateGu(gu, '전세', bucketKeys);
+
+    let areaObtainedPyeong = null;
+    if (sale.count > 0 && sale.sumPrice > 0) {
+      const areaObtainedM2 = budgetManwon * (sale.sumArea / sale.sumPrice);
+      areaObtainedPyeong = areaObtainedM2 / PYEONG;
+    }
+
+    let jeonseRatio = null;
+    if (sale.count > 0 && jeonse.count > 0) {
+      const avgSale = sale.sumPrice / sale.count;
+      const avgJeonse = jeonse.sumPrice / jeonse.count;
+      jeonseRatio = avgJeonse / avgSale;
+    }
+
+    return {
+      gu,
+      hasData: sale.count > 0,
+      areaObtainedPyeong,
+      volume: sale.count,
+      jeonseRatio,
+    };
+  });
+
+  rows.sort((a, b) => {
+    if (a.hasData !== b.hasData) return a.hasData ? -1 : 1;
+    return (b.areaObtainedPyeong ?? -1) - (a.areaObtainedPyeong ?? -1);
+  });
+
+  return rows;
+}
+
+function fmt1(n) { return n === null ? '—' : n.toFixed(1); }
+function fmtPct(n) { return n === null ? '—' : (n * 100).toFixed(0) + '%'; }
+
+function renderTable(rows) {
+  const tbody = document.getElementById('rankTableBody');
+  tbody.innerHTML = '';
+  rows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.gu = row.gu;
+    if (!row.hasData) tr.classList.add('no-data');
+    if (row.gu === selectedGu) tr.classList.add('selected');
+
+    const isTop3 = row.hasData && i < 3;
+    tr.innerHTML = `
+      <td class="rank">${i + 1}</td>
+      <td class="gu-name ${isTop3 ? 'highlight' : ''}">${row.gu}</td>
+      <td>${row.hasData ? fmt1(row.areaObtainedPyeong) + '평' : '거래 없음'}</td>
+      <td>${row.hasData ? row.volume.toLocaleString() + '건' : '—'}</td>
+      <td>${fmtPct(row.jeonseRatio)}</td>
+    `;
+    if (row.hasData) {
+      tr.addEventListener('click', () => selectGu(row.gu));
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+function renderRankChart(rows) {
+  const withData = rows.filter(r => r.hasData);
+  const ctx = document.getElementById('rankChart');
+
+  if (rankChart) rankChart.destroy();
+  rankChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: withData.map(r => r.gu),
+      datasets: [{
+        label: '내 예산으로 얻는 면적(평)',
+        data: withData.map(r => Number(r.areaObtainedPyeong.toFixed(1))),
+        backgroundColor: withData.map((r, i) => i < 3 ? '#0066FF' : '#9EC5FF'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 60 } },
+        y: { title: { display: true, text: '평' } },
+      },
+    },
+  });
+}
+
+function selectGu(gu) {
+  selectedGu = gu;
+  render();
+  renderTrend(gu);
+  document.getElementById('trendSection').classList.add('visible');
+  document.getElementById('trendSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderTrend(gu) {
+  const areaMin = Number(document.getElementById('areaMinInput').value);
+  const areaMax = Number(document.getElementById('areaMaxInput').value);
+  const bucketKeys = bucketsInRange(areaMin, areaMax);
+
+  document.getElementById('trendTitle').textContent = `${gu} — 12개월 가격 추이`;
+  document.getElementById('trendSubtitle').textContent =
+    `희망 면적 ${areaMin}~${areaMax}㎡ 기준 매매 평균가와 거래량`;
+
+  const guData = DATA.data[gu];
+  const saleByMonth = (guData && guData['매매']) || {};
+
+  const months = DATA.meta.months;
+  const avgPrices = [];
+  const volumes = [];
+
+  months.forEach(ym => {
+    const monthData = saleByMonth[ym];
+    let count = 0, sumPrice = 0;
+    if (monthData) {
+      bucketKeys.forEach(bk => {
+        const cell = monthData[bk];
+        if (!cell) return;
+        count += cell.count;
+        sumPrice += cell.sum_price;
+      });
+    }
+    volumes.push(count);
+    avgPrices.push(count > 0 ? Number((sumPrice / count / 10000).toFixed(2)) : null);
+  });
+
+  const ctx = document.getElementById('trendChart');
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    data: {
+      labels: months,
+      datasets: [
+        {
+          type: 'bar',
+          label: '거래량(건)',
+          data: volumes,
+          backgroundColor: '#DCDCDC',
+          yAxisID: 'y1',
+          order: 2,
+        },
+        {
+          type: 'line',
+          label: '평균 매매가(억원)',
+          data: avgPrices,
+          borderColor: '#0066FF',
+          backgroundColor: '#0066FF',
+          tension: 0.3,
+          spanGaps: true,
+          yAxisID: 'y',
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          position: 'left',
+          title: { display: true, text: '평균 매매가(억원)' },
+        },
+        y1: {
+          position: 'right',
+          title: { display: true, text: '거래량(건)' },
+          grid: { drawOnChartArea: false },
+        },
+      },
+    },
+  });
+}
+
+function render() {
+  const budgetEok = Number(document.getElementById('budgetInput').value) || 0;
+  const areaMin = Number(document.getElementById('areaMinInput').value) || 0;
+  const areaMax = Number(document.getElementById('areaMaxInput').value) || 300;
+
+  const rows = computeRanking(budgetEok, areaMin, areaMax);
+  renderTable(rows);
+  renderRankChart(rows);
+}
+
+document.getElementById('budgetInput').addEventListener('input', render);
+document.getElementById('areaMinInput').addEventListener('input', render);
+document.getElementById('areaMaxInput').addEventListener('input', render);
+
+document.querySelectorAll('.area-presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('areaMinInput').value = btn.dataset.min;
+    document.getElementById('areaMaxInput').value = btn.dataset.max;
+    render();
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
