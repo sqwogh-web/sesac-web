@@ -15,11 +15,13 @@ def area_bucket(area_m2):
 
 
 def empty_cell():
-    return {'count': 0, 'sum_price': 0.0, 'sum_area': 0.0}
+    return {'count': 0, 'sum_price': 0.0, 'sum_area': 0.0, 'sum_rent': 0.0}
 
 
 def build():
-    # data[gu][deal_type][ym][bucket] = {count, sum_price, sum_area}
+    # data[gu][deal_type][ym][bucket] = {count, sum_price, sum_area, sum_rent}
+    # sum_price holds the up-front capital: 매매가(price) for 매매, 보증금(deposit) for 전세/월세
+    # sum_rent holds monthly_rent and is only ever non-zero for 월세
     data = {}
     months = set()
 
@@ -27,7 +29,7 @@ def build():
         reader = csv.DictReader(f)
         for row in reader:
             deal_type = row['deal_type']
-            if deal_type not in ('매매', '전세'):
+            if deal_type not in ('매매', '전세', '월세'):
                 continue
             if not row['area_m2']:
                 continue
@@ -41,19 +43,22 @@ def build():
                 if not row['price']:
                     continue
                 amount = float(row['price'])
+                rent = 0.0
             else:
                 if not row['deposit']:
                     continue
                 amount = float(row['deposit'])
+                rent = float(row['monthly_rent']) if row['monthly_rent'] else 0.0
 
             months.add(ym)
 
-            gu_slot = data.setdefault(gu, {'매매': {}, '전세': {}})
+            gu_slot = data.setdefault(gu, {'매매': {}, '전세': {}, '월세': {}})
             ym_slot = gu_slot[deal_type].setdefault(ym, {})
             cell = ym_slot.setdefault(str(bucket), empty_cell())
             cell['count'] += 1
             cell['sum_price'] += amount
             cell['sum_area'] += area
+            cell['sum_rent'] += rent
 
     result = {
         'meta': {

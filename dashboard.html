@@ -180,6 +180,30 @@
     color: var(--color-primary-strong);
   }
 
+  /* --- segmented control (deal type) --- */
+  .segmented {
+    display: inline-flex;
+    background: var(--color-bg-alternative);
+    border-radius: var(--radius-small);
+    padding: 4px;
+    gap: 4px;
+  }
+  .segmented button {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-label-alternative);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    cursor: pointer;
+  }
+  .segmented button.active {
+    background: var(--color-bg-normal);
+    color: var(--color-primary-strong);
+    box-shadow: var(--shadow-small);
+  }
+
   /* --- table --- */
   .table-scroll {
     overflow-x: auto;
@@ -259,9 +283,18 @@
     <h1>우리 예산으로 어디에 살 수 있을까?</h1>
     <p class="subtitle">서울 아파트 실거래가 320,141건 (2025-07 ~ 2026-06) 기반 · 신혼부부를 위한 자치구 비교 도구</p>
 
+    <div class="field" style="margin-bottom: var(--spacing-24);">
+      <label>거래 형태</label>
+      <div class="segmented" id="dealTypeSegmented">
+        <button type="button" class="active" data-deal-type="매매">매매</button>
+        <button type="button" data-deal-type="전세">전세</button>
+        <button type="button" data-deal-type="월세">월세</button>
+      </div>
+    </div>
+
     <div class="controls">
       <div class="field">
-        <label for="budgetInput">예산 (억원)</label>
+        <label for="budgetInput" id="budgetLabel">예산 (매매가 기준, 억원)</label>
         <input type="number" id="budgetInput" value="7" min="1" max="50" step="0.5">
       </div>
       <div class="field">
@@ -282,7 +315,7 @@
 
   <section>
     <h2>자치구 랭킹 — 내 예산으로 얻는 면적 순</h2>
-    <p>매매 기준. 표의 행을 클릭하면 그 구의 12개월 가격 추이를 볼 수 있습니다.</p>
+    <p id="rankSubtitle">매매 기준. 표의 행을 클릭하면 그 구의 12개월 가격 추이를 볼 수 있습니다.</p>
 
     <div class="chart-wrap">
       <canvas id="rankChart"></canvas>
@@ -294,9 +327,10 @@
           <tr>
             <th>순위</th>
             <th>자치구</th>
-            <th>내 예산으로 얻는 면적</th>
+            <th id="areaColHeader">내 예산으로 얻는 면적</th>
             <th>거래량(12개월)</th>
             <th>전세가율</th>
+            <th>평균 월세(만원)</th>
           </tr>
         </thead>
         <tbody id="rankTableBody"></tbody>
@@ -307,6 +341,7 @@
   <section id="trendSection">
     <h2 id="trendTitle">추이</h2>
     <p id="trendSubtitle"></p>
+    <p id="trendRentNote" style="display:none; color: var(--color-primary-strong); font-weight: 700;"></p>
     <div class="chart-wrap">
       <canvas id="trendChart"></canvas>
     </div>
@@ -325,6 +360,9 @@ let DATA = null;
 let rankChart = null;
 let trendChart = null;
 let selectedGu = null;
+let selectedDealType = '매매';
+
+const DEAL_TYPE_LABEL = { '매매': '매매가', '전세': '전세보증금', '월세': '보증금' };
 
 async function loadData() {
   const res = await fetch('data/dashboard_data.json');
@@ -345,9 +383,9 @@ function bucketsInRange(min, max) {
 
 function aggregateGu(gu, dealType, bucketKeys) {
   const guData = DATA.data[gu];
-  if (!guData) return { count: 0, sumPrice: 0, sumArea: 0 };
+  if (!guData) return { count: 0, sumPrice: 0, sumArea: 0, sumRent: 0 };
   const byMonth = guData[dealType] || {};
-  let count = 0, sumPrice = 0, sumArea = 0;
+  let count = 0, sumPrice = 0, sumArea = 0, sumRent = 0;
   for (const ym of DATA.meta.months) {
     const monthData = byMonth[ym];
     if (!monthData) continue;
@@ -357,22 +395,25 @@ function aggregateGu(gu, dealType, bucketKeys) {
       count += cell.count;
       sumPrice += cell.sum_price;
       sumArea += cell.sum_area;
+      sumRent += cell.sum_rent || 0;
     }
   }
-  return { count, sumPrice, sumArea };
+  return { count, sumPrice, sumArea, sumRent };
 }
 
-function computeRanking(budgetEok, areaMin, areaMax) {
+function computeRanking(dealType, budgetEok, areaMin, areaMax) {
   const budgetManwon = budgetEok * 10000;
   const bucketKeys = bucketsInRange(areaMin, areaMax);
 
   const rows = DATA.meta.gu_list.map(gu => {
+    const primary = aggregateGu(gu, dealType, bucketKeys);
     const sale = aggregateGu(gu, '매매', bucketKeys);
     const jeonse = aggregateGu(gu, '전세', bucketKeys);
+    const wolse = aggregateGu(gu, '월세', bucketKeys);
 
     let areaObtainedPyeong = null;
-    if (sale.count > 0 && sale.sumPrice > 0) {
-      const areaObtainedM2 = budgetManwon * (sale.sumArea / sale.sumPrice);
+    if (primary.count > 0 && primary.sumPrice > 0) {
+      const areaObtainedM2 = budgetManwon * (primary.sumArea / primary.sumPrice);
       areaObtainedPyeong = areaObtainedM2 / PYEONG;
     }
 
@@ -383,12 +424,18 @@ function computeRanking(budgetEok, areaMin, areaMax) {
       jeonseRatio = avgJeonse / avgSale;
     }
 
+    let avgRent = null;
+    if (wolse.count > 0) {
+      avgRent = wolse.sumRent / wolse.count;
+    }
+
     return {
       gu,
-      hasData: sale.count > 0,
+      hasData: primary.count > 0,
       areaObtainedPyeong,
-      volume: sale.count,
+      volume: primary.count,
       jeonseRatio,
+      avgRent,
     };
   });
 
@@ -401,6 +448,7 @@ function computeRanking(budgetEok, areaMin, areaMax) {
 }
 
 function fmt1(n) { return n === null ? '—' : n.toFixed(1); }
+function fmt0(n) { return n === null ? '—' : Math.round(n).toLocaleString(); }
 function fmtPct(n) { return n === null ? '—' : (n * 100).toFixed(0) + '%'; }
 
 function renderTable(rows) {
@@ -419,6 +467,7 @@ function renderTable(rows) {
       <td>${row.hasData ? fmt1(row.areaObtainedPyeong) + '평' : '거래 없음'}</td>
       <td>${row.hasData ? row.volume.toLocaleString() + '건' : '—'}</td>
       <td>${fmtPct(row.jeonseRatio)}</td>
+      <td>${fmt0(row.avgRent)}</td>
     `;
     if (row.hasData) {
       tr.addEventListener('click', () => selectGu(row.gu));
@@ -467,20 +516,22 @@ function renderTrend(gu) {
   const areaMin = Number(document.getElementById('areaMinInput').value);
   const areaMax = Number(document.getElementById('areaMaxInput').value);
   const bucketKeys = bucketsInRange(areaMin, areaMax);
+  const dealLabel = DEAL_TYPE_LABEL[selectedDealType];
 
-  document.getElementById('trendTitle').textContent = `${gu} — 12개월 가격 추이`;
+  document.getElementById('trendTitle').textContent = `${gu} — 12개월 ${dealLabel} 추이`;
   document.getElementById('trendSubtitle').textContent =
-    `희망 면적 ${areaMin}~${areaMax}㎡ 기준 매매 평균가와 거래량`;
+    `희망 면적 ${areaMin}~${areaMax}㎡ · ${selectedDealType} 기준 평균 ${dealLabel}와 거래량`;
 
   const guData = DATA.data[gu];
-  const saleByMonth = (guData && guData['매매']) || {};
+  const byMonth = (guData && guData[selectedDealType]) || {};
 
   const months = DATA.meta.months;
   const avgPrices = [];
   const volumes = [];
+  let rentTotal = 0, rentCount = 0;
 
   months.forEach(ym => {
-    const monthData = saleByMonth[ym];
+    const monthData = byMonth[ym];
     let count = 0, sumPrice = 0;
     if (monthData) {
       bucketKeys.forEach(bk => {
@@ -488,11 +539,21 @@ function renderTrend(gu) {
         if (!cell) return;
         count += cell.count;
         sumPrice += cell.sum_price;
+        rentTotal += cell.sum_rent || 0;
+        rentCount += cell.sum_rent ? cell.count : 0;
       });
     }
     volumes.push(count);
     avgPrices.push(count > 0 ? Number((sumPrice / count / 10000).toFixed(2)) : null);
   });
+
+  const rentNote = document.getElementById('trendRentNote');
+  if (selectedDealType === '월세' && rentCount > 0) {
+    rentNote.textContent = `이 기간 평균 월세: ${Math.round(rentTotal / rentCount).toLocaleString()}만원`;
+    rentNote.style.display = 'block';
+  } else {
+    rentNote.style.display = 'none';
+  }
 
   const ctx = document.getElementById('trendChart');
   if (trendChart) trendChart.destroy();
@@ -510,7 +571,7 @@ function renderTrend(gu) {
         },
         {
           type: 'line',
-          label: '평균 매매가(억원)',
+          label: `평균 ${dealLabel}(억원)`,
           data: avgPrices,
           borderColor: '#0066FF',
           backgroundColor: '#0066FF',
@@ -527,7 +588,7 @@ function renderTrend(gu) {
       scales: {
         y: {
           position: 'left',
-          title: { display: true, text: '평균 매매가(억원)' },
+          title: { display: true, text: `평균 ${dealLabel}(억원)` },
         },
         y1: {
           position: 'right',
@@ -539,12 +600,22 @@ function renderTrend(gu) {
   });
 }
 
+function updateDealTypeLabels() {
+  document.getElementById('budgetLabel').textContent =
+    `예산 (${DEAL_TYPE_LABEL[selectedDealType]} 기준, 억원)`;
+  document.getElementById('rankSubtitle').textContent =
+    `${selectedDealType} 기준. 표의 행을 클릭하면 그 구의 12개월 추이를 볼 수 있습니다.`;
+  document.getElementById('areaColHeader').textContent =
+    selectedDealType === '매매' ? '내 예산으로 얻는 면적' : '내 보증금으로 얻는 면적';
+}
+
 function render() {
   const budgetEok = Number(document.getElementById('budgetInput').value) || 0;
   const areaMin = Number(document.getElementById('areaMinInput').value) || 0;
   const areaMax = Number(document.getElementById('areaMaxInput').value) || 300;
 
-  const rows = computeRanking(budgetEok, areaMin, areaMax);
+  updateDealTypeLabels();
+  const rows = computeRanking(selectedDealType, budgetEok, areaMin, areaMax);
   renderTable(rows);
   renderRankChart(rows);
 }
@@ -558,6 +629,16 @@ document.querySelectorAll('.area-presets button').forEach(btn => {
     document.getElementById('areaMinInput').value = btn.dataset.min;
     document.getElementById('areaMaxInput').value = btn.dataset.max;
     render();
+  });
+});
+
+document.querySelectorAll('#dealTypeSegmented button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#dealTypeSegmented button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedDealType = btn.dataset.dealType;
+    render();
+    if (selectedGu) renderTrend(selectedGu);
   });
 });
 
