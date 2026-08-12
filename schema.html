@@ -184,6 +184,21 @@
     padding-top: 32px;
     border-top: 1px solid var(--rule);
   }
+
+  .filetree {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.9;
+    background: #ffffff;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .filetree .dim { color: var(--soft); }
+  .filetree .focal { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -194,12 +209,38 @@
   <p class="eyebrow">Schema · 고정 챕터 · 부동산 대시보드</p>
   <h1>이 웹페이지의 데이터 구조 한눈에 보기</h1>
   <p class="lede">
-    <code>seoul-apt-latest.csv</code>가 어떻게 <code>data/dashboard_data.json</code>으로 압축되고,
-    <code>dashboard.html</code>이 그 데이터를 어떻게 읽는지를 두 장의 다이어그램과 표로 정리합니다.
+    이 사이트의 파일 구조부터, <code>seoul-apt-latest.csv</code>가 어떻게 <code>data/dashboard_data.json</code>으로 압축되고
+    <code>dashboard.html</code>이 그 데이터를 어떻게 읽는지까지 — 파일 지도 하나, 다이어그램 두 장, 표로 정리합니다.
   </p>
 
   <section>
-    <p class="eyebrow">01 · Pipeline</p>
+    <p class="eyebrow">01 · Site map</p>
+    <h2>페이지 구조</h2>
+    <p class="section-desc">이 사이트는 정적 파일 8개로 이루어져 있습니다. 코드 2개가 데이터를 만들고, 문서 3개가 그 데이터를 화면과 글로 보여줍니다.</p>
+
+    <div class="filetree"><span class="dim">sesac-web/</span>
+├── seoul-apt-latest.csv     <span class="dim">← 원본 데이터, 32만 행 · 27.6MB</span>
+├── code/
+│   ├── build_data.py        <span class="dim">← CSV → dashboard_data.json 집계 스크립트</span>
+│   ├── analyze.py           <span class="dim">← 자치구별 매매-전세 갭 분석</span>
+│   └── base.py               <span class="dim">← CSV를 한글 컬럼명으로 읽는 예제</span>
+├── data/
+│   └── <span class="focal">dashboard_data.json</span>  <span class="dim">← 대시보드가 실제로 fetch하는 집계 데이터</span>
+├── index.html                <span class="dim">← 메인 페이지 (자기소개 + 대시보드 링크)</span>
+├── dashboard.html             <span class="dim">← 부동산 대시보드 (예산/면적/거래유형 → 랭킹·추이)</span>
+├── <span class="focal">schema.html</span>              <span class="dim">← 지금 보고 있는 이 페이지</span>
+├── PRD.md                    <span class="dim">← 대시보드 기획 문서</span>
+└── for_starters.md            <span class="dim">← 세션 전체를 설명하는 초보자용 문서</span></div>
+
+    <p>
+      화면 두 개(<code>index.html</code>, <code>dashboard.html</code>)는 원티드 Montage 디자인 시스템을 따르고,
+      이 페이지(<code>schema.html</code>)만 <a href="https://github.com/cathrynlavery/diagram-design" target="_blank" rel="noopener">별도의 에디토리얼 디자인 시스템</a>으로 만들어져 있습니다 —
+      "데이터 구조를 도해로 설명한다"는 이 페이지만의 목적에 맞춰 의도적으로 다른 톤을 골랐습니다.
+    </p>
+  </section>
+
+  <section>
+    <p class="eyebrow">02 · Pipeline</p>
     <h2>데이터가 흘러가는 경로</h2>
     <p class="section-desc">원본 CSV는 브라우저가 직접 읽지 않습니다. Python 스크립트가 미리 집계해 작은 JSON을 만들고, 웹페이지는 그 JSON만 받아 옵니다.</p>
 
@@ -256,7 +297,7 @@
   </section>
 
   <section>
-    <p class="eyebrow">02 · Nested containment</p>
+    <p class="eyebrow">03 · Nested containment</p>
     <h2><code>dashboard_data.json</code>의 중첩 구조</h2>
     <p class="section-desc">바깥쪽일수록 범위가 넓고, 안쪽일수록 구체적입니다. 가장 안쪽 칸(면적구간)이 실제 숫자 4개를 담고 있는 최소 단위입니다.</p>
 
@@ -312,7 +353,7 @@
   </section>
 
   <section>
-    <p class="eyebrow">03 · Reference</p>
+    <p class="eyebrow">04 · Reference</p>
     <h2>원본 CSV 컬럼</h2>
     <p class="section-desc"><code>seoul-apt-latest.csv</code>의 한 행은 아파트 실거래 한 건입니다.</p>
 
